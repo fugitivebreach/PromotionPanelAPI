@@ -41,9 +41,17 @@ def get_user_info(user_id):
     """Get user information from ROBLOX"""
     try:
         response = requests.get(f'https://users.roblox.com/v1/users/{user_id}')
+        logger.info(f"User info request for {user_id}: Status {response.status_code}")
         if response.status_code == 200:
-            return response.json()
-        return None
+            user_data = response.json()
+            logger.info(f"User {user_id} exists: {user_data.get('name', 'Unknown')}")
+            return user_data
+        elif response.status_code == 404:
+            logger.error(f"User {user_id} does not exist")
+            return None
+        else:
+            logger.error(f"Unexpected status code {response.status_code} for user {user_id}")
+            return None
     except Exception as e:
         logger.error(f"Failed to get user info for {user_id}: {e}")
         return None
@@ -64,9 +72,18 @@ def get_user_rank_in_group(user_id, group_id):
 
 def promote_user_in_group(user_id, rank_id):
     """Promote user in ROBLOX group"""
+    logger.info(f"Starting promotion for user {user_id} to rank {rank_id}")
+    
+    if not ROBLOX_COOKIE:
+        logger.error("ROBLOX_COOKIE not set")
+        return False, "ROBLOX cookie not configured"
+    
     csrf_token = get_csrf_token()
     if not csrf_token:
+        logger.error("Failed to get CSRF token")
         return False, "Failed to get CSRF token"
+    
+    logger.info(f"Got CSRF token: {csrf_token[:10]}...")
     
     headers = {
         'Cookie': f'.ROBLOSECURITY={ROBLOX_COOKIE}',
@@ -80,18 +97,27 @@ def promote_user_in_group(user_id, rank_id):
     }
     
     try:
-        response = requests.patch(
-            f'https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}',
-            headers=headers,
-            json=data
-        )
+        url = f'https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}'
+        logger.info(f"Making PATCH request to: {url}")
+        logger.info(f"Request data: {data}")
+        
+        response = requests.patch(url, headers=headers, json=data)
+        
+        logger.info(f"Response status: {response.status_code}")
+        logger.info(f"Response text: {response.text}")
         
         if response.status_code == 200:
             return True, "User promoted successfully"
+        elif response.status_code == 401:
+            return False, "Unauthorized - Invalid ROBLOX cookie"
+        elif response.status_code == 403:
+            return False, "Forbidden - Insufficient permissions"
+        elif response.status_code == 404:
+            return False, "User not found in group"
         else:
             return False, f"Failed to promote user: {response.status_code} - {response.text}"
     except Exception as e:
-        logger.error(f"Failed to promote user {user_id}: {e}")
+        logger.error(f"Exception during promotion for user {user_id}: {e}")
         return False, f"Exception occurred: {str(e)}"
 
 @app.route('/', methods=['GET'])
