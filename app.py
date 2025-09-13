@@ -94,6 +94,7 @@ def promote_user_in_group(user_id, rank_id):
         logger.error(f"Failed to promote user {user_id}: {e}")
         return False, f"Exception occurred: {str(e)}"
 
+@app.route('/', methods=['GET'])
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
