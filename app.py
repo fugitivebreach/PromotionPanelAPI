@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 API_KEY = "ARROWSPROMOTIONAPI2025-2026APIAPIAPIAPIAPIROYALGUARDROYALGUARDPROMOTIONPANEL"
 ROBLOX_COOKIE = os.getenv('ROBLOX_COOKIE')
-GROUP_ID = 34500822
+GROUP_ID = 9429240
 
 # In-memory storage for promotion requests (in production, use a database)
 promotion_requests = {}
